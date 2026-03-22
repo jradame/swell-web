@@ -56,6 +56,7 @@ function QualityBadge({ label }) {
 }
 
 export default function Home() {
+  const [selectedRegion, setSelectedRegion] = useState('West Coast')
   const [selectedSpotId, setSelectedSpotId] = useState('trestles')
   const [conditions, setConditions] = useState(null)
   const [condLoading, setCondLoading] = useState(true)
@@ -63,9 +64,17 @@ export default function Home() {
   const [sessions, setSessions] = useState([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
 
-  const selectedSpot = SPOTS.find(s => s.id === selectedSpotId) || SPOTS[0]
+  const regionSpots = SPOTS.filter(s => s.region === selectedRegion)
+  const selectedSpot = SPOTS.find(s => s.id === selectedSpotId) || regionSpots[0]
+
+  const handleRegionChange = (region) => {
+    setSelectedRegion(region)
+    const first = SPOTS.find(s => s.region === region)
+    if (first) setSelectedSpotId(first.id)
+  }
 
   useEffect(() => {
+    if (!selectedSpot) return
     setCondLoading(true); setCondError(false); setConditions(null)
     fetchConditions(selectedSpot.lat, selectedSpot.lng)
       .then(d => { setConditions(d); setCondLoading(false) })
@@ -94,10 +103,9 @@ export default function Home() {
     : '--'
   const recentSessions = sessions.slice(0, 4)
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return ''
-    const d = new Date(dateStr + 'T00:00:00')
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const formatDate = (d) => {
+    if (!d) return ''
+    return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   return (
@@ -120,31 +128,45 @@ export default function Home() {
 
       {/* Conditions card */}
       <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', marginBottom: '20px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 20px 14px', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Current conditions</div>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <select
-                value={selectedSpotId}
-                onChange={e => setSelectedSpotId(e.target.value)}
-                style={{ background: 'var(--card-alt)', border: '0.5px solid var(--border-mid)', borderRadius: 'var(--radius-md)', color: 'var(--text)', fontSize: '15px', fontWeight: '500', fontFamily: 'var(--font-body)', padding: '7px 32px 7px 12px', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', outline: 'none' }}
-              >
-                {REGIONS.map(region => (
-                  <optgroup key={region} label={region}>
-                    {SPOTS.filter(s => s.region === region).map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </div>
+
+        {/* Region tabs scrollable */}
+        <div style={{ display: 'flex', gap: '6px', padding: '14px 16px 10px', overflowX: 'auto', borderBottom: '0.5px solid var(--border)' }}>
+          {REGIONS.map(r => (
+            <button key={r} onClick={() => handleRegionChange(r)} style={{
+              padding: '5px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '500',
+              whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer', transition: 'all 0.12s',
+              background: selectedRegion === r ? 'var(--gold-dim)' : 'transparent',
+              border: selectedRegion === r ? '0.5px solid var(--gold)' : '0.5px solid var(--border)',
+              color: selectedRegion === r ? 'var(--gold)' : 'var(--text-muted)',
+            }}>
+              {r}
+            </button>
+          ))}
+        </div>
+
+        {/* Spot dropdown for selected region + quality badge */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', gap: '10px' }}>
+          <div style={{ position: 'relative', flex: 1, maxWidth: '260px' }}>
+            <select
+              value={selectedSpotId}
+              onChange={e => setSelectedSpotId(e.target.value)}
+              style={{
+                width: '100%', background: 'var(--card-alt)', border: '0.5px solid var(--border-mid)',
+                borderRadius: 'var(--radius-md)', color: 'var(--text)', fontSize: '15px',
+                fontWeight: '500', fontFamily: 'var(--font-body)', padding: '7px 32px 7px 12px',
+                cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', outline: 'none',
+              }}
+            >
+              {regionSpots.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
           </div>
           <QualityBadge label={condLoading ? '...' : condError ? 'N/A' : conditions?.quality} />
         </div>
 
+        {/* Conditions data */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '0.5px solid var(--border)' }}>
           {[
             { val: condLoading ? '—' : condError ? '—' : `${conditions?.waveHeight}`, unit: 'ft', label: 'Wave height' },
@@ -165,8 +187,7 @@ export default function Home() {
           <span>Offshore swell · Open-Meteo Marine</span>
           {conditions?.fetchedAt && <span>Updated {conditions.fetchedAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>}
         </div>
-
-        <style>{`select option { background: #243447; color: #fff; } optgroup { color: #94a3b8; } select:focus { border-color: var(--gold) !important; }`}</style>
+        <style>{`select option { background: #243447; color: #fff; } select:focus { border-color: var(--gold) !important; }`}</style>
       </div>
 
       {/* Stat cards */}
@@ -182,7 +203,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-
       <style>{`.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; } @media (min-width: 768px) { .stat-grid { gap: 16px; } }`}</style>
 
       {/* Recent sessions */}
@@ -196,9 +216,7 @@ export default function Home() {
       ) : recentSessions.length === 0 ? (
         <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px dashed var(--border-mid)', padding: '32px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>No sessions logged yet</div>
-          <Link href="/log" style={{ display: 'inline-block', padding: '10px 20px', background: 'var(--gold)', color: 'var(--bg)', borderRadius: 'var(--radius-md)', fontSize: '13px', fontWeight: '500' }}>
-            Log your first session
-          </Link>
+          <Link href="/log" style={{ display: 'inline-block', padding: '10px 20px', background: 'var(--gold)', color: 'var(--bg)', borderRadius: 'var(--radius-md)', fontSize: '13px', fontWeight: '500' }}>Log your first session</Link>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
