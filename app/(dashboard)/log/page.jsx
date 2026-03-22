@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { SPOTS } from '@/lib/spots'
+import { SPOTS, REGIONS } from '@/lib/spots'
 
 const BOARDS = ["5'10 shortboard","6'0 thruster","6'2 shortboard","6'4 step-up","7'6 funboard","8'0 mini-mal","9'0 longboard","9'0 gun","Bodyboard","Other"]
 
@@ -63,11 +63,23 @@ export default function LogSession() {
         <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>How was it out there?</div>
       </div>
 
+      {/* Spot - grouped by region */}
       <FieldWrapper label="Spot">
         <div style={{ position: 'relative' }}>
-          <select value={form.spot} onChange={e => set('spot', e.target.value)} required style={{ ...inputStyle, paddingRight: '36px', cursor: 'pointer' }}>
+          <select
+            value={form.spot}
+            onChange={e => set('spot', e.target.value)}
+            required
+            style={{ ...inputStyle, paddingRight: '36px', cursor: 'pointer' }}
+          >
             <option value="" disabled>Select a spot</option>
-            {SPOTS.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+            {REGIONS.map(region => (
+              <optgroup key={region} label={region}>
+                {SPOTS.filter(s => s.region === region).map(s => (
+                  <option key={s.id} value={s.name}>{s.name}</option>
+                ))}
+              </optgroup>
+            ))}
           </select>
           <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
@@ -134,6 +146,7 @@ export default function LogSession() {
       <style>{`
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
         select option { background: #1B2D3F; color: #f1f5f9; }
+        optgroup { color: #94a3b8; font-size: 11px; }
         input::placeholder, textarea::placeholder { color: var(--text-muted); }
         input:focus, select:focus, textarea:focus { border-color: var(--gold) !important; }
       `}</style>

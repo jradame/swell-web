@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { SPOTS } from '@/lib/spots'
+import { SPOTS, REGIONS } from '@/lib/spots'
 
 const mToFt = (m) => Math.round(m * 3.281)
 const msToKt = (ms) => Math.round(ms * 1.944)
@@ -124,12 +124,18 @@ export default function Home() {
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Current conditions</div>
             <div style={{ position: 'relative', display: 'inline-block' }}>
-              <select value={selectedSpotId} onChange={e => setSelectedSpotId(e.target.value)} style={{
-                background: 'var(--card-alt)', border: '0.5px solid var(--border-mid)', borderRadius: 'var(--radius-md)',
-                color: 'var(--text)', fontSize: '16px', fontWeight: '500', fontFamily: 'var(--font-body)',
-                padding: '7px 32px 7px 12px', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', outline: 'none',
-              }}>
-                {SPOTS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              <select
+                value={selectedSpotId}
+                onChange={e => setSelectedSpotId(e.target.value)}
+                style={{ background: 'var(--card-alt)', border: '0.5px solid var(--border-mid)', borderRadius: 'var(--radius-md)', color: 'var(--text)', fontSize: '15px', fontWeight: '500', fontFamily: 'var(--font-body)', padding: '7px 32px 7px 12px', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', outline: 'none' }}
+              >
+                {REGIONS.map(region => (
+                  <optgroup key={region} label={region}>
+                    {SPOTS.filter(s => s.region === region).map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
               <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
@@ -160,7 +166,7 @@ export default function Home() {
           {conditions?.fetchedAt && <span>Updated {conditions.fetchedAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>}
         </div>
 
-        <style>{`select option { background: #243447; color: #fff; } select:focus { border-color: var(--gold) !important; }`}</style>
+        <style>{`select option { background: #243447; color: #fff; } optgroup { color: #94a3b8; } select:focus { border-color: var(--gold) !important; }`}</style>
       </div>
 
       {/* Stat cards */}
@@ -186,9 +192,7 @@ export default function Home() {
       </div>
 
       {sessionsLoading ? (
-        <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border)', padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-          Loading...
-        </div>
+        <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border)', padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>Loading...</div>
       ) : recentSessions.length === 0 ? (
         <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px dashed var(--border-mid)', padding: '32px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>No sessions logged yet</div>
