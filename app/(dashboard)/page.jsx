@@ -109,8 +109,7 @@ export default function Home() {
   }
 
   return (
-    <div style={{ padding: '24px 20px 40px', maxWidth: '960px' }}>
-
+<div style={{ padding: '24px 20px 40px', maxWidth: '960px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div style={{ minWidth: 0, flex: 1 }}>
@@ -198,7 +197,7 @@ export default function Home() {
         ].map((s, i) => (
           <div key={i} style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border)', padding: '20px 24px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>{s.label}</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '44px', fontWeight: '800', color: 'var(--text)', lineHeight: 1 }}>{s.val}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 8vw, 44px)', fontWeight: '800', color: 'var(--text)', lineHeight: 1 }}>{s.val}</div>
             <div style={{ fontSize: '12px', color: 'var(--gold)', marginTop: '8px' }}>{s.sub}</div>
           </div>
         ))}
