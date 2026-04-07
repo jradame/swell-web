@@ -26,6 +26,34 @@ async function fetchConditions(lat, lng) {
   return { waveHeight: waveHeightFt, period, wind: windKt, quality: getQuality(waveHeightFt, windKt), fetchedAt: new Date() }
 }
 
+async function fetchTides(noaaStation) {
+  if (!noaaStation) return null
+  const today = new Date()
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
+  const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&range=24&station=${noaaStation}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=swell_app&format=json`
+  const res = await fetch(url)
+  if (!res.ok) return null
+  const data = await res.json()
+  if (!data.predictions) return null
+  return data.predictions.map(p => ({
+    time: p.t,
+    height: parseFloat(p.v).toFixed(1),
+    type: p.type === 'H' ? 'High' : 'Low',
+  }))
+}
+
+async function fetchWaterTemp(noaaStation) {
+  if (!noaaStation) return null
+  const today = new Date()
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
+  const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&range=1&station=${noaaStation}&product=water_temperature&datum=MLLW&time_zone=lst_ldt&units=english&application=swell_app&format=json`
+  const res = await fetch(url)
+  if (!res.ok) return null
+  const data = await res.json()
+  if (!data.data || !data.data[0]) return null
+  return parseFloat(data.data[0].v).toFixed(1)
+}
+
 function StarRating({ rating = 0, size = 11 }) {
   return (
     <div style={{ display: 'flex', gap: '2px' }}>
@@ -63,6 +91,8 @@ export default function Home() {
   const [condError, setCondError] = useState(false)
   const [sessions, setSessions] = useState([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [tides, setTides] = useState(null)
+  const [waterTemp, setWaterTemp] = useState(null)
 
   const regionSpots = SPOTS.filter(s => s.region === selectedRegion)
   const selectedSpot = SPOTS.find(s => s.id === selectedSpotId) || regionSpots[0]
@@ -76,9 +106,19 @@ export default function Home() {
   useEffect(() => {
     if (!selectedSpot) return
     setCondLoading(true); setCondError(false); setConditions(null)
+    setTides(null); setWaterTemp(null)
     fetchConditions(selectedSpot.lat, selectedSpot.lng)
       .then(d => { setConditions(d); setCondLoading(false) })
       .catch(() => { setCondError(true); setCondLoading(false) })
+
+    if (selectedSpot.noaaStation) {
+      fetchTides(selectedSpot.noaaStation)
+        .then(d => setTides(d))
+        .catch(() => setTides(null))
+      fetchWaterTemp(selectedSpot.noaaStation)
+        .then(d => setWaterTemp(d))
+        .catch(() => setWaterTemp(null))
+    }
   }, [selectedSpotId])
 
   useEffect(() => {
@@ -108,8 +148,24 @@ export default function Home() {
     return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
+  const formatTideTime = (t) => {
+    if (!t) return ''
+    const [, time] = t.split(' ')
+    const [h, m] = time.split(':')
+    const hr = parseInt(h)
+    const ampm = hr >= 12 ? 'PM' : 'AM'
+    const h12 = hr % 12 || 12
+    return `${h12}:${m} ${ampm}`
+  }
+
+  const nextTides = tides ? tides.filter(t => {
+    const tideTime = new Date(t.time.replace(' ', 'T'))
+    return tideTime > now
+  }).slice(0, 4) : []
+
   return (
-<div style={{ padding: '24px 20px 40px', maxWidth: '960px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+    <div style={{ padding: '24px 20px 40px', maxWidth: '960px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div style={{ minWidth: 0, flex: 1 }}>
@@ -126,9 +182,8 @@ export default function Home() {
       </div>
 
       {/* Conditions card */}
-      <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', marginBottom: '20px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', marginBottom: '12px', overflow: 'hidden' }}>
 
-        {/* Region tabs scrollable */}
         <div style={{ display: 'flex', gap: '6px', padding: '14px 16px 10px', overflowX: 'auto', borderBottom: '0.5px solid var(--border)' }}>
           {REGIONS.map(r => (
             <button key={r} onClick={() => handleRegionChange(r)} style={{
@@ -143,7 +198,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Spot dropdown for selected region + quality badge */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', gap: '10px' }}>
           <div style={{ position: 'relative', flex: 1, maxWidth: '260px' }}>
             <select
@@ -165,7 +219,6 @@ export default function Home() {
           <QualityBadge label={condLoading ? '...' : condError ? 'N/A' : conditions?.quality} />
         </div>
 
-        {/* Conditions data */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '0.5px solid var(--border)' }}>
           {[
             { val: condLoading ? '—' : condError ? '—' : `${conditions?.waveHeight}`, unit: 'ft', label: 'Wave height' },
@@ -188,6 +241,36 @@ export default function Home() {
         </div>
         <style>{`select option { background: #243447; color: #fff; } select:focus { border-color: var(--gold) !important; }`}</style>
       </div>
+
+      {/* Tides and Water Temp cards */}
+      {(nextTides.length > 0 || waterTemp) && (
+        <div style={{ display: 'grid', gridTemplateColumns: nextTides.length > 0 && waterTemp ? '1fr 1fr' : '1fr', gap: '12px', marginBottom: '12px' }}>
+          {nextTides.length > 0 && (
+            <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Tides</div>
+              <div style={{ display: 'flex', gap: '20px' }}>
+                {nextTides.slice(0, 2).map((tide, i) => (
+                  <div key={i}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '4px' }}>{tide.type.toUpperCase()}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: '800', color: 'var(--text)', lineHeight: 1 }}>
+                      {tide.height}<span style={{ fontSize: '11px', color: 'var(--primary)', marginLeft: '2px' }}>ft</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{formatTideTime(tide.time)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {waterTemp && (
+            <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Water Temp</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '36px', fontWeight: '800', color: 'var(--text)', lineHeight: 1 }}>
+                {waterTemp}<span style={{ fontSize: '14px', color: 'var(--primary)', marginLeft: '2px' }}>°F</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="stat-grid">
