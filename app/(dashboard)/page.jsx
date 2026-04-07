@@ -166,7 +166,6 @@ export default function Home() {
   return (
     <div style={{ padding: '24px 20px 40px', maxWidth: '960px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>{greeting}</div>
@@ -181,9 +180,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Conditions card */}
       <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', marginBottom: '12px', overflow: 'hidden' }}>
-
         <div style={{ display: 'flex', gap: '6px', padding: '14px 16px 10px', overflowX: 'auto', borderBottom: '0.5px solid var(--border)' }}>
           {REGIONS.map(r => (
             <button key={r} onClick={() => handleRegionChange(r)} style={{
@@ -242,12 +239,11 @@ export default function Home() {
         <style>{`select option { background: #243447; color: #fff; } select:focus { border-color: var(--gold) !important; }`}</style>
       </div>
 
-      {/* Tides and Water Temp cards */}
-      {(nextTides.length > 0 || waterTemp) && (
-        <div style={{ display: 'grid', gridTemplateColumns: nextTides.length > 0 && waterTemp ? '1fr 1fr' : '1fr', gap: '12px', marginBottom: '12px' }}>
-          {nextTides.length > 0 && (
-            <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Tides</div>
+      {selectedSpot?.noaaStation && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Tides</div>
+            {nextTides.length > 0 ? (
               <div style={{ display: 'flex', gap: '20px' }}>
                 {nextTides.slice(0, 2).map((tide, i) => (
                   <div key={i}>
@@ -259,20 +255,23 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-          {waterTemp && (
-            <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Water Temp</div>
+            ) : (
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No upcoming tides</div>
+            )}
+          </div>
+          <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Water Temp</div>
+            {waterTemp ? (
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '36px', fontWeight: '800', color: 'var(--text)', lineHeight: 1 }}>
                 {waterTemp}<span style={{ fontSize: '14px', color: 'var(--primary)', marginLeft: '2px' }}>°F</span>
               </div>
-            </div>
-          )}
+            ) : (
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No data</div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Stat cards */}
       <div className="stat-grid">
         {[
           { label: 'Total sessions', val: sessionsLoading ? '—' : totalSessions, sub: totalSessions === 0 ? 'Log your first' : `${thisMonth} this month` },
@@ -287,7 +286,6 @@ export default function Home() {
       </div>
       <style>{`.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; } @media (min-width: 768px) { .stat-grid { gap: 16px; } }`}</style>
 
-      {/* Recent sessions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
         <div style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Recent sessions</div>
         <Link href="/history" style={{ fontSize: '13px', color: 'var(--gold)' }}>See all →</Link>
