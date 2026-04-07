@@ -101,7 +101,7 @@ export default function Home() {
   const avgWave = sessions.length
     ? (sessions.reduce((acc, s) => acc + parseFloat(s.waveHeight || 0), 0) / sessions.length).toFixed(1)
     : '--'
-  const recentSessions = sessions.slice(0, 4)
+  const recentSessions = sessions.slice(0, 3)
 
   const formatDate = (d) => {
     if (!d) return ''
