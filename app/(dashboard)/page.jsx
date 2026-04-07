@@ -17,7 +17,10 @@ const getQuality = (waveHeightFt, windKt) => {
 async function fetchConditions(lat, lng) {
   const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&current=wave_height,wave_period,wave_direction&forecast_days=1`
   const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=wind_speed_10m&wind_speed_unit=ms`
-  const [marineRes, weatherRes] = await Promise.all([fetch(marineUrl), fetch(weatherUrl)])
+  const [marineRes, weatherRes] = await Promise.all([
+    fetch(marineUrl, { cache: 'no-store' }),
+    fetch(weatherUrl, { cache: 'no-store' })
+  ])
   if (!marineRes.ok || !weatherRes.ok) throw new Error('Failed')
   const [marineData, weatherData] = await Promise.all([marineRes.json(), weatherRes.json()])
   const waveHeightFt = mToFt(marineData.current.wave_height)
@@ -31,7 +34,7 @@ async function fetchTides(noaaStation) {
   const today = new Date()
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
   const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&range=24&station=${noaaStation}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=swell_app&format=json`
-  const res = await fetch(url)
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) return null
   const data = await res.json()
   if (!data.predictions) return null
@@ -47,7 +50,7 @@ async function fetchWaterTemp(noaaStation) {
   const today = new Date()
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
   const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&range=1&station=${noaaStation}&product=water_temperature&datum=MLLW&time_zone=lst_ldt&units=english&application=swell_app&format=json`
-  const res = await fetch(url)
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) return null
   const data = await res.json()
   if (!data.data || !data.data[0]) return null
@@ -244,9 +247,9 @@ export default function Home() {
           <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Tides</div>
             {nextTides.length > 0 ? (
-              <div style={{ display: 'flex', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-around' }}>
                 {nextTides.slice(0, 2).map((tide, i) => (
-                  <div key={i}>
+                  <div key={i} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '4px' }}>{tide.type.toUpperCase()}</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: '800', color: 'var(--text)', lineHeight: 1 }}>
                       {tide.height}<span style={{ fontSize: '11px', color: 'var(--primary)', marginLeft: '2px' }}>ft</span>
