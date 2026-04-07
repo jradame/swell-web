@@ -32,7 +32,7 @@ async function fetchConditions(lat, lng) {
 async function fetchTides(noaaStation) {
   if (!noaaStation) return null
   const today = new Date()
-  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
+const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`
   const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&range=24&station=${noaaStation}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&application=swell_app&format=json`
   const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) return null
@@ -48,7 +48,7 @@ async function fetchTides(noaaStation) {
 async function fetchWaterTemp(noaaStation) {
   if (!noaaStation) return null
   const today = new Date()
-  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
+const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`
   const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${dateStr}&range=1&station=${noaaStation}&product=water_temperature&datum=MLLW&time_zone=lst_ldt&units=english&application=swell_app&format=json`
   const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) return null
