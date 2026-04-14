@@ -1,107 +1,149 @@
-# Swell-Web
+# Swell - Surf Session Tracker (Web)
 
-Surf session tracker with real auth, cloud database, and live swell data.
+A full-stack surf session tracker built with Next.js, Neon PostgreSQL, and Clerk. Live at swelltrackerapp.com. The native iOS app connects to this backend via Bearer token auth.
 
-## Live
+Web app: [swelltrackerapp.com](https://swelltrackerapp.com)
 
-[swell-v3-bice.vercel.app](https://swell-v3-bice.vercel.app)
+App Store: [apps.apple.com/us/app/swell/id6761311243](https://apps.apple.com/us/app/swell/id6761311243)
 
-## What's new in V3
+---
 
-V2 was a solid Vite + React app but sessions lived in localStorage — one device, no accounts. V3 is the full-stack upgrade.
+## What it does
 
-- **Clerk auth** — sign up, sign in, Google OAuth. Every surfer has their own account
-- **Neon PostgreSQL + Prisma** — sessions save to a real database, accessible from any device
-- **Next.js 15 App Router** — proper full-stack framework with API routes
-- **Architecture built for React Native** — Expo conversion is next
+Swell lets surfers log sessions, track wave height and duration, rate conditions with a 1-5 star system, and view progress over time. The home screen pulls live swell data and tide information for 29 spots across Hawaii, West Coast, Gulf Coast, East Coast, Puerto Rico, and International regions.
 
-Everything else you loved about V2 is still here — live swell data, responsive layout, the gold/blue design system, all the Puerto Rico spots.
+Sessions are stored in Neon PostgreSQL and sync across the web app and native iOS app using the same user account.
+
+---
 
 ## Stack
 
-- Next.js 15 (App Router)
-- Clerk — auth (email + Google OAuth)
-- Neon PostgreSQL + Prisma — session storage
-- Open-Meteo Marine + Weather API — live conditions
-- Syne + DM Sans + DM Mono — typography
-- Vercel — deployment
+- Next.js 15 App Router
+- Clerk for authentication (email and Google OAuth)
+- Neon PostgreSQL with Prisma ORM
+- Open-Meteo Marine and Weather API for live conditions
+- NOAA Tides and Currents API for tide predictions and water temperature
+- Deployed on Vercel with custom domain via GoDaddy DNS
 
-## Setup
+---
 
-1. Clone the repo
-2. Install dependencies:
+## Screens
+
+**Home** - Time-of-day greeting, region tabs, spot selector, live conditions widget (wave height, period, wind speed, water temperature, quality badge), tide predictions, stat cards, and recent sessions list.
+
+**Log** - Region and spot selector, date picker, wave height, duration, board type, star rating, and notes. Save is disabled until required fields are filled.
+
+**History** - Full session list with filter chips (All, This Month, Best Rated, Biggest Waves), color-coded rating pills, inline notes, edit and delete with confirmation.
+
+**Progress** - Session streak, total sessions, average wave height, monthly bar chart, and top spots ranked by session count.
+
+---
+
+## Design system
+
+- Background: `#0D1B2A`
+- Card surface: `#1B2D3F`
+- Gold (brand): `#C9A96E`
+- Gold (small text): `#d4b483`
+- Blue (data): `#38bdf8`
+- Typography: Syne (headings), DM Sans (body), DM Mono (numeric data)
+
+---
+
+## Quality badge logic
+
+| Badge | Condition |
+|-------|-----------|
+| Flat | Wave height under 1.5 ft |
+| Clean | 1.5 to 12 ft, wind under 15 kt |
+| Fair | 1.5 to 12 ft, wind 15 to 25 kt, or wave over 12 ft |
+| Blown | Wind over 25 kt regardless of wave height |
+
+---
+
+## Project structure
+
+app/
+api/
+sessions/
+route.js          GET and POST sessions
+[id]/route.js     PUT and DELETE session by ID
+(auth)/
+sign-in/            Clerk sign-in page
+sign-up/            Clerk sign-up page
+(dashboard)/
+layout.jsx          Sidebar and mobile bottom nav
+page.jsx            Home screen
+history/page.jsx    Session history
+log/page.jsx        Log session
+progress/page.jsx   Progress and stats
+lib/
+db.js                 Prisma client
+spots.js              29 surf spots with regions, coordinates, and NOAA station IDs
+styles/
+globals.css           Design tokens and base styles
+prisma/
+schema.prisma         Session model
+
+---
+
+## Getting started
+
+Clone the repo and install dependencies:
+
 ```bash
-npm install --legacy-peer-deps
+git clone https://github.com/jradame/swell-web.git
+cd swell-web
+npm install
 ```
 
-3. Create `.env.local` at the root:
-```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+Create a `.env.local` file with:
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
-DATABASE_URL=postgresql://...
-```
+DATABASE_URL=
 
-4. Push the database schema:
-```bash
-DATABASE_URL="your_connection_string" npx prisma db push
-```
+Run the dev server:
 
-5. Run dev server:
 ```bash
 npm run dev
 ```
 
-## File structure
+Note: Clerk is configured for the production domain. Local development requires updating the allowed origins in the Clerk dashboard.
 
-```
-app/
-  (auth)/
-    sign-in/[[...sign-in]]/page.jsx
-    sign-up/[[...sign-up]]/page.jsx
-  (dashboard)/
-    layout.jsx             — responsive nav (sidebar + bottom bar)
-    page.jsx               — Home dashboard + live conditions
-    log/page.jsx           — Log session form
-    history/page.jsx       — Session history with filters
-    progress/page.jsx      — Stats, streak, charts
-  api/
-    sessions/route.js      — GET + POST sessions
-    sessions/[id]/route.js — DELETE session
-  layout.jsx               — Root layout with ClerkProvider
-lib/
-  db.js                    — Prisma client singleton
-  spots.js                 — 20 surf spots with lat/lng (includes Puerto Rico)
-prisma/
-  schema.prisma            — Session model
-styles/
-  globals.css              — Design tokens + global styles
-middleware.js              — Clerk auth protection
-```
+---
 
-## Surf spots
+## API routes
 
-10 classic world-class spots plus 10 Puerto Rico breaks — Rincon, Tres Palmas, Wilderness, Domes, Crash Boat, Rio Grande, Avalanche, Wobbles, BCs, and The Mix.
+All session routes require a valid Clerk session (cookie for web, Bearer token for native).
 
-## Deploying to Vercel
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | /api/sessions | Fetch all sessions for the authenticated user |
+| POST | /api/sessions | Create a new session |
+| PUT | /api/sessions/[id] | Update an existing session |
+| DELETE | /api/sessions/[id] | Delete a session |
 
-1. Push to GitHub
-2. Import repo in Vercel
-3. Add all `.env.local` variables in Vercel project settings
-4. Deploy — Vercel auto-deploys on every push to main
+---
 
-## Roadmap
+## Deployment
 
-- React Native conversion via Expo (iOS + Android App Store)
-- Custom spot entry with map picker
-- Session detail + edit view
-- Water temperature from Open-Meteo Marine
-- Custom domain + Clerk production instance
+Deployed on Vercel. Push to main triggers an automatic deployment. Environment variables are set in the Vercel dashboard.
 
-## Built by
+Custom domain swelltrackerapp.com is pointed via GoDaddy DNS.
 
-Justin Adame — UX Designer + Frontend Developer — Austin, TX  
-[justinadame.com](https://justinadame.com)
+---
+
+## Related
+
+- Swell iOS app: [github.com/jradame/swell-app](https://github.com/jradame/swell-app)
+- Portfolio: [justinadame.com](https://justinadame.com)
+
+---
+
+Built by Justin Adame - UX Designer and Frontend Developer based in Austin, TX.
+
