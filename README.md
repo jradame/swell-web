@@ -1,4 +1,4 @@
-# Swell V3
+# Swell-Web
 
 Surf session tracker with real auth, cloud database, and live swell data.
 
