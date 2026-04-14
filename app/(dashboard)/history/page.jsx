@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { SPOTS, REGIONS } from '@/lib/spots'
+
+const BOARDS = ["5'10 shortboard","6'0 thruster","6'2 shortboard","6'4 step-up","7'6 funboard","8'0 mini-mal","9'0 longboard","9'0 gun","Bodyboard","Other"]
 
 const FILTERS = ['All', 'This month', 'Best rated', 'Biggest waves']
 
@@ -32,11 +35,25 @@ function Pill({ children, color = 'primary' }) {
   )
 }
 
+const fieldLabelStyle = {
+  display: 'block', fontSize: '11px', color: 'var(--text-muted)',
+  textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px',
+}
+
+const inputStyle = {
+  width: '100%', background: 'var(--card)', border: '0.5px solid var(--border-mid)',
+  borderRadius: 'var(--radius-md)', padding: '12px 14px', fontSize: '14px',
+  color: 'var(--text)', outline: 'none', appearance: 'none', WebkitAppearance: 'none',
+}
+
 export default function History() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [editSession, setEditSession] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [editSaving, setEditSaving] = useState(false)
 
   const loadSessions = () => {
     fetch('/api/sessions')
@@ -51,6 +68,34 @@ export default function History() {
     await fetch(`/api/sessions/${id}`, { method: 'DELETE' })
     setSessions(prev => prev.filter(s => s.id !== id))
     setConfirmDelete(null)
+  }
+
+  const openEdit = (s) => {
+    setEditSession(s)
+    setEditForm({
+      spot: s.spot,
+      date: s.date,
+      waveHeight: s.waveHeight,
+      duration: s.duration,
+      board: s.board || '',
+      rating: parseInt(s.rating) || 0,
+      notes: s.notes || '',
+    })
+  }
+
+  const setField = (field, val) => setEditForm(prev => ({ ...prev, [field]: val }))
+
+  const handleEditSubmit = async () => {
+    if (!editForm.spot || !editForm.date || !editForm.waveHeight || !editForm.duration) return
+    setEditSaving(true)
+    await fetch(`/api/sessions/${editSession.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm),
+    })
+    setSessions(prev => prev.map(s => s.id === editSession.id ? { ...s, ...editForm } : s))
+    setEditSession(null)
+    setEditSaving(false)
   }
 
   const formatDate = (dateStr) => {
@@ -73,6 +118,7 @@ export default function History() {
   })()
 
   const ratingColor = (r) => { const n = parseInt(r) || 0; return n >= 4 ? 'green' : n >= 3 ? 'amber' : 'primary' }
+  const canSave = editForm.spot && editForm.date && editForm.waveHeight && editForm.duration
 
   return (
     <div style={{ padding: '32px 0 40px', maxWidth: '960px' }}>
@@ -90,7 +136,7 @@ export default function History() {
             padding: '6px 14px', borderRadius: '20px', fontSize: '12px', whiteSpace: 'nowrap', flexShrink: 0,
             background: filter === f ? 'var(--gold-dim)' : 'var(--card)',
             border: filter === f ? '0.5px solid var(--gold)' : '0.5px solid var(--border)',
-            color: filter === f ? 'var(--gold)' : 'var(--text-muted)', cursor: 'pointer',
+            color: filter === f ? 'var(--gold-text)' : 'var(--text-muted)', cursor: 'pointer',
           }}>{f}</button>
         ))}
       </div>
@@ -117,6 +163,13 @@ export default function History() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <StarRating rating={parseInt(s.rating) || 0} />
+                  <button onClick={() => openEdit(s)} style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: 0.5 }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                    onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="var(--text-secondary)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
                   <button onClick={() => setConfirmDelete(s.id)} style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: 0.5 }}
                     onMouseEnter={e => e.currentTarget.style.opacity = 1}
                     onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
@@ -151,6 +204,111 @@ export default function History() {
               <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '12px', background: 'var(--card)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-md)', fontSize: '14px', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
               <button onClick={() => handleDelete(confirmDelete)} style={{ flex: 1, padding: '12px', background: 'var(--red-dim)', border: '0.5px solid var(--red)', borderRadius: 'var(--radius-md)', fontSize: '14px', color: 'var(--red)', cursor: 'pointer' }}>Delete</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {editSession && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200 }}
+          onClick={e => { if (e.target === e.currentTarget) setEditSession(null) }}
+        >
+          <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0', border: '0.5px solid var(--border-mid)', padding: '24px 20px 48px', width: '100%', maxWidth: '600px', maxHeight: '92vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: '800', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Edit session</div>
+              <button onClick={() => setEditSession(null)} style={{ width: '30px', height: '30px', borderRadius: '8px', background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: 0.7 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="var(--text)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={fieldLabelStyle}>Spot</label>
+              <div style={{ position: 'relative' }}>
+                <select value={editForm.spot} onChange={e => setField('spot', e.target.value)} style={{ ...inputStyle, paddingRight: '36px', cursor: 'pointer' }}>
+                  <option value="" disabled>Select a spot</option>
+                  {REGIONS.map(region => (
+                    <optgroup key={region} label={region}>
+                      {SPOTS.filter(s => s.region === region).map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={fieldLabelStyle}>Date</label>
+              <input type="date" value={editForm.date} onChange={e => setField('date', e.target.value)} style={inputStyle}/>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={fieldLabelStyle}>Wave height (ft)</label>
+                <input type="number" min="0" max="50" step="0.5" placeholder="e.g. 4" value={editForm.waveHeight} onChange={e => setField('waveHeight', e.target.value)} style={inputStyle}/>
+              </div>
+              <div>
+                <label style={fieldLabelStyle}>Duration (min)</label>
+                <input type="number" min="0" max="480" placeholder="e.g. 90" value={editForm.duration} onChange={e => setField('duration', e.target.value)} style={inputStyle}/>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={fieldLabelStyle}>Board</label>
+              <div style={{ position: 'relative' }}>
+                <select value={editForm.board} onChange={e => setField('board', e.target.value)} style={{ ...inputStyle, paddingRight: '36px', cursor: 'pointer' }}>
+                  <option value="">Select a board (optional)</option>
+                  {BOARDS.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={fieldLabelStyle}>Session rating</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {[1,2,3,4,5].map(n => (
+                  <button key={n} onClick={() => setField('rating', n)} style={{
+                    flex: 1, padding: '12px 4px',
+                    background: editForm.rating >= n ? 'var(--gold-dim)' : 'var(--card)',
+                    border: editForm.rating >= n ? '0.5px solid var(--gold)' : '0.5px solid var(--border)',
+                    borderRadius: 'var(--radius-md)', fontSize: '18px', transition: 'all 0.12s', lineHeight: 1,
+                    color: editForm.rating >= n ? 'var(--gold)' : 'var(--text-muted)',
+                  }}>
+                    {editForm.rating >= n ? '★' : '☆'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={fieldLabelStyle}>Notes</label>
+              <textarea rows={3} placeholder="How were the conditions?" value={editForm.notes} onChange={e => setField('notes', e.target.value)} style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}/>
+            </div>
+
+            <button onClick={handleEditSubmit} disabled={!canSave || editSaving} style={{
+              width: '100%', padding: '16px',
+              background: canSave && !editSaving ? 'var(--gold)' : 'var(--card)',
+              color: canSave && !editSaving ? 'var(--bg)' : 'var(--text-muted)',
+              borderRadius: 'var(--radius-lg)', fontSize: '15px', fontWeight: '500',
+              fontFamily: 'var(--font-body)', transition: 'all 0.15s',
+              cursor: canSave && !editSaving ? 'pointer' : 'not-allowed',
+            }}>
+              {editSaving ? 'Saving...' : 'Save changes'}
+            </button>
+
+            <style>{`
+              input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+              select option { background: #1B2D3F; color: #f1f5f9; }
+              optgroup { color: #94a3b8; font-size: 11px; }
+              input::placeholder, textarea::placeholder { color: var(--text-muted); }
+              input:focus, select:focus, textarea:focus { border-color: var(--gold) !important; }
+            `}</style>
           </div>
         </div>
       )}

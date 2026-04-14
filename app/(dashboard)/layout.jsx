@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }) {
             return (
               <Link key={item.to} href={item.to} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderRadius: 'var(--radius-md)', background: active ? 'var(--gold-dim)' : 'transparent', border: active ? '0.5px solid var(--border-mid)' : '0.5px solid transparent' }}>
                 {item.icon(active)}
-                <span style={{ fontSize: '14px', fontWeight: '500', color: active ? 'var(--gold)' : 'var(--text-secondary)' }}>{item.label}</span>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: active ? 'var(--gold-text)' : 'var(--text-secondary)' }}>{item.label}</span>
               </Link>
             )
           })}
@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }) {
             return (
               <Link key={item.to} href={item.to} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '8px 16px', borderRadius: 'var(--radius-md)', background: active ? 'var(--gold-dim)' : 'transparent' }}>
                 {item.icon(active)}
-                <span style={{ fontSize: '10px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? 'var(--gold)' : 'var(--text-muted)' }}>{item.label}</span>
+                <span style={{ fontSize: '10px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? 'var(--gold-text)' : 'var(--text-muted)' }}>{item.label}</span>
               </Link>
             )
           })}

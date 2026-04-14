@@ -3,7 +3,7 @@
 :root {
   --bg: #0D1B2A; --surface: #1B2D3F; --card: #1B2D3F; --card-alt: #243447;
   --border: rgba(201,169,110,0.12); --border-mid: rgba(201,169,110,0.22);
-  --gold: #C9A96E; --gold-light: #d6b884; --gold-dim: rgba(201,169,110,0.12);
+  --gold: #C9A96E; --gold-text: #d4b483; --gold-light: #d6b884; --gold-dim: rgba(201,169,110,0.12);
   --primary: #38bdf8; --primary-dim: rgba(56,189,248,0.10);
   --green: #34d399; --green-dim: rgba(52,211,153,0.12);
   --amber: #fbbf24; --amber-dim: rgba(251,191,36,0.12);

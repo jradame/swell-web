@@ -73,10 +73,10 @@ function StarRating({ rating = 0, size = 11 }) {
 
 function QualityBadge({ label }) {
   const colors = {
-    'Clean': { bg: 'var(--green-dim)', color: 'var(--green)' },
-    'Fair':  { bg: 'var(--amber-dim)', color: 'var(--amber)' },
-    'Blown': { bg: 'var(--red-dim)',   color: 'var(--red)'   },
-    'Flat':  { bg: 'var(--primary-dim)', color: 'var(--primary)' },
+    'Clean': { bg: 'var(--green-dim)',              color: 'var(--green)'      },
+    'Fair':  { bg: 'var(--amber-dim)',              color: 'var(--amber)'      },
+    'Blown': { bg: 'var(--red-dim)',                color: 'var(--red)'        },
+    'Flat':  { bg: 'rgba(100,116,139,0.15)',        color: 'var(--text-muted)' },
   }
   const c = colors[label] || colors['Fair']
   return (
@@ -191,7 +191,7 @@ export default function Home() {
               whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer', transition: 'all 0.12s',
               background: selectedRegion === r ? 'var(--gold-dim)' : 'transparent',
               border: selectedRegion === r ? '0.5px solid var(--gold)' : '0.5px solid var(--border)',
-              color: selectedRegion === r ? 'var(--gold)' : 'var(--text-muted)',
+              color: selectedRegion === r ? 'var(--gold-text)' : 'var(--text-muted)',
             }}>
               {r}
             </button>
@@ -258,9 +258,11 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No upcoming tides</div>
-            )}
+            ) : tides !== null ? (
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                Tide predictions unavailable. All predictions for today have passed. Check back tomorrow.
+              </div>
+            ) : null}
           </div>
           <div style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border-mid)', padding: '16px' }}>
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Water Temp</div>
@@ -283,7 +285,7 @@ export default function Home() {
           <div key={i} style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '0.5px solid var(--border)', padding: '20px 24px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>{s.label}</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 8vw, 44px)', fontWeight: '800', color: 'var(--text)', lineHeight: 1 }}>{s.val}</div>
-            <div style={{ fontSize: '12px', color: 'var(--gold)', marginTop: '8px' }}>{s.sub}</div>
+            <div style={{ fontSize: '12px', color: 'var(--gold-text)', marginTop: '8px' }}>{s.sub}</div>
           </div>
         ))}
       </div>
@@ -291,7 +293,7 @@ export default function Home() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
         <div style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Recent sessions</div>
-        <Link href="/history" style={{ fontSize: '13px', color: 'var(--gold)' }}>See all →</Link>
+        <Link href="/history" style={{ fontSize: '13px', color: 'var(--gold-text)' }}>See all</Link>
       </div>
 
       {sessionsLoading ? (
